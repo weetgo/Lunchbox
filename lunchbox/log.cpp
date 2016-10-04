@@ -384,22 +384,22 @@ void Log::setOutput( std::ostream& stream )
 
 bool Log::setOutput( const std::string& file )
 {
-    std::ostream* oldLog = _logStream;
     std::ofstream* newLog = new std::ofstream( file.c_str( ));
 
-    if( newLog->is_open( ))
+    if( !newLog->is_open( ))
     {
-        setOutput( *newLog );
-        *oldLog << "Redirected log to " << file << std::endl;
-
-        delete _logFile;
-        _logFile = newLog;
-        return true;
+        LBERROR << "Can't open log file " << file << ": " << sysError
+                << std::endl;
+        delete newLog;
+        return false;
     }
 
-    LBERROR << "Can't open log file " << file << ": " << sysError << std::endl;
-    delete newLog;
-    return false;
+    LBDEBUG << "Redirect log to " << file << std::endl;
+    setOutput( *newLog );
+
+    delete _logFile;
+    _logFile = newLog;
+    return true;
 }
 
 void Log::setClock( Clock* clock )
@@ -432,7 +432,7 @@ std::ostream& exdent( std::ostream& os )
     Log* log = dynamic_cast<Log*>(&os);
     if( log )
         log->exdent();
-        return os;
+    return os;
 }
 
 std::ostream& disableFlush( std::ostream& os )

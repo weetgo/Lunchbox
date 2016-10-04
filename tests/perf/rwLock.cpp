@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2011-2014, Stefan Eilemann <eile@eyescale.ch>
+/* Copyright (c) 2011-2016, Stefan Eilemann <eile@eyescale.ch>
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -23,7 +23,6 @@
 #include <lunchbox/debug.h>
 #include <lunchbox/init.h>
 #include <lunchbox/lock.h>
-#include <lunchbox/omp.h>
 #include <lunchbox/spinLock.h>
 #include <lunchbox/timedLock.h>
 
@@ -50,25 +49,25 @@ public:
     double sTime;
 
     virtual void run()
+    {
+        ops = 0;
+        sTime = 0.;
+        while( LB_LIKELY( _running ))
         {
-            ops = 0;
-            sTime = 0.;
-            while( LB_LIKELY( _running ))
+            lock->set();
+            TEST( lock->isSetWrite( ));
+            // cppcheck-suppress duplicateExpression
+            if( hold > 0 ) // static, optimized out
             {
-                lock->set();
-                TEST( lock->isSetWrite( ));
-                // cppcheck-suppress duplicateExpression
-                if( hold > 0 ) // static, optimized out
-                {
-                    const double begin = _clock.getTimed();
-                    lunchbox::sleep( hold );
-                    sTime += _clock.getTimef() - begin;
-                }
-                lock->unset();
-
-                ++ops;
+                const double begin = _clock.getTimed();
+                lunchbox::sleep( hold );
+                sTime += _clock.getTimef() - begin;
             }
+            lock->unset();
+
+            ++ops;
         }
+    }
 };
 
 template< class T, uint32_t hold > class ReadThread : public lunchbox::Thread
@@ -104,14 +103,10 @@ public:
 
 template< class T, uint32_t hold > void _test()
 {
-    T* lock = new T;
-    lock->set();
-
-#ifdef LUNCHBOX_USE_OPENMP
-    const size_t nThreads = LB_MIN( lunchbox::OMP::getNThreads()*3, MAXTHREADS );
-#else
     const size_t nThreads = 16;
-#endif
+
+    T lock;
+    lock.set();
 
     WriteThread< T, hold > writers[MAXTHREADS];
     ReadThread< T, hold > readers[MAXTHREADS];
@@ -130,18 +125,18 @@ template< class T, uint32_t hold > void _test()
             _running = true;
             for( size_t j = 0; j < nWrite; ++j )
             {
-                writers[j].lock = lock;
+                writers[j].lock = &lock;
                 TEST( writers[j].start( ));
             }
             for( size_t j = 0; j < nRead; ++j )
             {
-                readers[j].lock = lock;
+                readers[j].lock = &lock;
                 TESTINFO( readers[j].start(), j );
             }
             lunchbox::sleep( 10 ); // let threads initialize
 
             _clock.reset();
-            lock->unset();
+            lock.unset();
             lunchbox::sleep( TIME ); // let threads run
             _running = false;
 
@@ -151,8 +146,8 @@ template< class T, uint32_t hold > void _test()
                 TEST( readers[j].join( ));
             const double time = _clock.getTimed();
 
-            TEST( !lock->isSet( ));
-            lock->set();
+            TEST( !lock.isSet( ));
+            lock.set();
 
             size_t nWriteOps = 0;
             double wTime = time * double( nWrite );
@@ -186,8 +181,6 @@ template< class T, uint32_t hold > void _test()
                       << std::endl;
         }
     }
-
-    delete lock;
 }
 
 int main( int argc, char **argv )

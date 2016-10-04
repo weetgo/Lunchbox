@@ -22,6 +22,8 @@ set(LUNCHBOX_PUBLIC_HEADERS
   hash.h
   indexIterator.h
   init.h
+  intervalSet.h
+  intervalSet.ipp
   launcher.h
   lfQueue.h
   lfQueue.ipp
@@ -33,10 +35,8 @@ set(LUNCHBOX_PUBLIC_HEADERS
   log.h
   memoryMap.h
   monitor.h
-  mpi.h
   mtQueue.h
   mtQueue.ipp
-  omp.h
   os.h
   perThread.h
   perThread.ipp
@@ -64,8 +64,6 @@ set(LUNCHBOX_PUBLIC_HEADERS
   timedLock.h
   tls.h
   types.h
-  unorderedIntervalSet.h
-  unorderedIntervalSet.ipp
   visitorResult.h
   )
 if(NOT LUNCHBOX_BUILD_V2_API)
@@ -80,7 +78,6 @@ set(LUNCHBOX_HEADERS
   detail/threadID.h
   leveldb/persistentMap.h
   memcached/persistentMap.h
-  skv/persistentMap.h
   time.h
   test.h
 )
@@ -99,8 +96,6 @@ set(LUNCHBOX_SOURCES
   lock.cpp
   log.cpp
   memoryMap.cpp
-  mpi.cpp
-  omp.cpp
   os.cpp
   persistentMap.cpp
   referenced.cpp
@@ -141,9 +136,6 @@ if(LEVELDB_FOUND)
 endif()
 if(libmemcached_FOUND)
   list(APPEND LUNCHBOX_LINK_LIBRARIES ${libmemcached_LIBRARIES})
-endif()
-if(SKV_FOUND)
-  list(APPEND LUNCHBOX_LINK_LIBRARIES skv_client fxlogger)
 endif()
 
 common_library(Lunchbox)
