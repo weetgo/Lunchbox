@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2017, Stefan.Eilemann@epfl.ch
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -15,34 +15,33 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef LUNCHBOX_HASH_H
-#define LUNCHBOX_HASH_H
-
-#include <lunchbox/refPtr.h>
-
-#include <unordered_map>
+#pragma once
+#include <string>
 
 namespace lunchbox
 {
-/** A hash for pointer keys. @version 1.0 */
-template <class K, class T>
-class PtrHash : public std::unordered_map<K, T, std::hash<const void*> >
+namespace string
 {
-};
-
-template <typename T>
-struct hashRefPtr
+/**
+ * Prepend each line of the given input with the given text.
+ *
+ * @param input the input string to add the prepended text
+ * @param text text to prepend
+ * @return the prepended string
+ * @version 1.16
+ */
+inline std::string prepend(const std::string& input, const std::string& text)
 {
-    size_t operator()(RefPtr<T> key) const
+    std::string output;
+    size_t pos = 0;
+    for (size_t nextPos = input.find('\n', pos); nextPos != std::string::npos;
+         nextPos = input.find('\n', pos))
     {
-        return std::hash<const void*>()(key.get());
+        output += text + input.substr(pos, nextPos - pos + 1);
+        pos = nextPos + 1;
     }
-};
-
-/** A hash for RefPtr keys. @version 1.0 */
-template <class K, class T>
-class RefPtrHash : public std::unordered_map<RefPtr<K>, T, hashRefPtr<K> >
-{
-};
+    output += text + input.substr(pos, std::string::npos);
+    return output;
 }
-#endif // LUNCHBOX_HASH_H
+}
+}

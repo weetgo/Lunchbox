@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2013-2015, EPFL/Blue Brain Project
+/* Copyright (c) 2013-2017, EPFL/Blue Brain Project
  *                          Raphael Dumusc <raphael.dumusc@epfl.ch>
  *                          Stefan.Eilemann@epfl.ch
  *
@@ -22,25 +22,22 @@
 #ifndef LUNCHBOX_PLUGINFACTORY_H
 #define LUNCHBOX_PLUGINFACTORY_H
 
-#include <lunchbox/types.h>
 #include <lunchbox/algorithm.h> // used inline
-#include <lunchbox/debug.h> // LBTHROW
-#include <lunchbox/dso.h> // used inline
-#include <lunchbox/file.h> // searchDirectory() used inline
+#include <lunchbox/debug.h>     // LBTHROW
+#include <lunchbox/dso.h>       // used inline
+#include <lunchbox/file.h>      // searchDirectory() used inline
+#include <lunchbox/plugin.h>    // member
+#include <lunchbox/types.h>
 #include <servus/uri.h> // Default template type
 
-#include <boost/foreach.hpp> // used inline
-#include <boost/lexical_cast.hpp> // used inline
-#include <boost/noncopyable.hpp> // base class
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 namespace lunchbox
 {
-
 /**
  * Factory for Plugin classes.
  *
- * The PluginFactory selects the a plugin for a given InitDataT, based on a
+ * The PluginFactory selects the a plugin for a given T::InitDataT, based on a
  * plugin's handles() function. In case a InitDataT can be handled by multiple
  * plugins, which plugin is chosen is undefined.
  *
@@ -55,15 +52,18 @@ namespace lunchbox
  *
  * @version 1.11.0
  */
-template< class PluginT, class InitDataT = servus::URI >
-class PluginFactory : public boost::noncopyable
+template <class T>
+class PluginFactory
 {
 public:
-    typedef Plugin< PluginT, InitDataT > PluginHolder;
-    typedef std::vector< PluginHolder > Plugins;
+    typedef Plugin<T> PluginT;
+    typedef std::vector<PluginT> Plugins;
 
-    /** Get the single class instance. @version 1.11.0 */
+    /** Get the single class instance. @version 1.11 */
     static PluginFactory& getInstance();
+
+    /** @return true if any plugin handles the given parameter. @version 1.16 */
+    bool handles(const typename T::InitDataT& initData);
 
     /**
      * Create a plugin instance.
@@ -73,16 +73,19 @@ public:
      * @throws std::runtime_error if no plugin can handle the initData.
      * @version 1.11.0
      */
-    PluginT* create( const InitDataT& initData );
+    T* create(const typename T::InitDataT& initData);
 
-    /** Register a plugin type. @version 1.11.0 */
-    void register_( const Plugin< PluginT, InitDataT >& plugin );
+    /** Register a plugin type. @version 1.11 */
+    void register_(const PluginT& plugin);
 
-    /** Deregister a plugin type. @version 1.11.0 */
-    bool deregister( const Plugin< PluginT, InitDataT >& plugin );
+    /** Deregister a plugin type. @version 1.11 */
+    bool deregister(const PluginT& plugin);
 
-    /** Unregister all plugin types. @version 1.11.0 */
+    /** Unregister all plugin types. @version 1.11 */
     void deregisterAll();
+
+    /** @return the descriptions of all registered plugins. @version 1.16 */
+    std::string getDescriptions() const;
 
     /** @name Automatic loading of plugin DSOs. */
     //@{
@@ -99,37 +102,30 @@ public:
      *                plugins.
      * @param path the directory to search for plugins.
      * @param pattern the core pattern of plugin names.
-     * @return the loaded plugins, ownership remains with the PluginFactory.
      * @version 1.11.0
      * @sa getLibraryPath()
      */
-    DSOs load( const int version, const std::string& path,
-               const std::string& pattern );
-    DSOs load( const int version, const Strings& paths,
-               const std::string& pattern );
-
-    /**
-     * Unload and deregister a previously loaded plugin
-     *
-     * @return true if the plugin was loaded, false on error.
-     * @version 1.11.0
-     */
-    bool unload( DSO* dso );
+    void load(const int version, const std::string& path,
+              const std::string& pattern);
+    void load(const int version, const Strings& paths,
+              const std::string& pattern);
     //@}
 
 private:
-#pragma warning( disable: 4251 )
-    Plugins _plugins;
-    typedef boost::unordered_map< DSO*, PluginHolder > PluginMap;
-    PluginMap _libraries;
-#pragma warning( default: 4251 )
+    PluginFactory() {}
+    PluginFactory(const PluginFactory&) = delete;
+    PluginFactory(PluginFactory&&) = delete;
+    PluginFactory& operator=(const PluginFactory&) = delete;
+    PluginFactory& operator=(PluginFactory&&) = delete;
 
-    void _load( DSOs& result, const int version, const std::string& path,
-                const std::string& pattern );
+#pragma warning(disable : 4251)
+    Plugins _plugins;
+    typedef std::unordered_map<DSO*, PluginT> PluginMap;
+    PluginMap _libraries;
+#pragma warning(default : 4251)
 
     ~PluginFactory();
 };
-
 }
 
 #include "pluginFactory.ipp" // template implementation

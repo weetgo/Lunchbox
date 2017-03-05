@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2011-2012, Stefan Eilemann <eile@eyescale.ch>
+/* Copyright (c) 2017, Daniel.Nachbaur@epfl.ch
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -15,22 +15,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "sleep.h"
+#define BOOST_TEST_MODULE Buffer
+#include <boost/test/unit_test.hpp>
 
-#include "os.h"
-#include "time.h"
+#include <lunchbox/buffer.h>
 
-namespace lunchbox
+BOOST_AUTO_TEST_CASE(copy_construct_from_empty_buffer)
 {
-void sleep(const uint32_t milliSeconds)
-{
-#ifdef _WIN32 //_MSC_VER
-    ::Sleep(milliSeconds);
-#else
-    timespec ts = convertToTimespec(milliSeconds);
-    while (::nanosleep(&ts, &ts) != 0) // -1 on signal (#4)
-        if (ts.tv_sec <= 0 && ts.tv_nsec <= 0)
-            return;
-#endif
-}
+    lunchbox::Bufferb empty;
+    lunchbox::Bufferb newBuffer(empty);
+    BOOST_CHECK_EQUAL(newBuffer.getData(), empty.getData());
+    BOOST_CHECK_EQUAL(newBuffer.getSize(), empty.getSize());
 }

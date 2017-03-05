@@ -1,5 +1,5 @@
 
-# Copyright (c) 2012-2016 Stefan Eilemann <eile@eyescale.ch>
+# Copyright (c) 2012-2017 Stefan Eilemann <eile@eyescale.ch>
 
 set(LUNCHBOX_PUBLIC_HEADERS
   algorithm.h
@@ -12,11 +12,11 @@ set(LUNCHBOX_PUBLIC_HEADERS
   buffer.ipp
   clock.h
   compiler.h
-  condition.h
   daemon.h
   debug.h
   dso.h
   file.h
+  fork.h
   future.h
   futureFunction.h
   hash.h
@@ -24,13 +24,11 @@ set(LUNCHBOX_PUBLIC_HEADERS
   init.h
   intervalSet.h
   intervalSet.ipp
-  launcher.h
   lfQueue.h
   lfQueue.ipp
   lfVector.h
   lfVector.ipp
   lfVectorIterator.h
-  lock.h
   lockable.h
   log.h
   memoryMap.h
@@ -41,7 +39,6 @@ set(LUNCHBOX_PUBLIC_HEADERS
   perThread.h
   perThread.ipp
   perThreadRef.h
-  persistentMap.h
   plugin.h
   pluginFactory.h
   pluginFactory.ipp
@@ -58,10 +55,12 @@ set(LUNCHBOX_PUBLIC_HEADERS
   serializable.h
   sleep.h
   spinLock.h
-  stdExt.h
+  string.h
+  term.h
   thread.h
   threadID.h
-  timedLock.h
+  threadPool.h
+  threadPool.ipp
   tls.h
   types.h
   visitorResult.h
@@ -76,8 +75,6 @@ endif()
 
 set(LUNCHBOX_HEADERS
   detail/threadID.h
-  leveldb/persistentMap.h
-  memcached/persistentMap.h
   time.h
   test.h
 )
@@ -86,32 +83,29 @@ set(LUNCHBOX_SOURCES
   any.cpp
   atomic.cpp
   clock.cpp
-  condition.cpp
-  condition_w32.ipp
   debug.cpp
   dso.cpp
   file.cpp
+  fork.cpp
   init.cpp
-  launcher.cpp
-  lock.cpp
   log.cpp
   memoryMap.cpp
   os.cpp
-  persistentMap.cpp
   referenced.cpp
   requestHandler.cpp
   rng.cpp
   sleep.cpp
   spinLock.cpp
+  term.cpp
   thread.cpp
   threadID.cpp
-  timedLock.cpp
   tls.cpp
   )
 
 set(LUNCHBOX_PUBLIC_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
+
 list(APPEND LUNCHBOX_LINK_LIBRARIES PUBLIC ${Boost_LIBRARIES} Servus
-                                    PRIVATE ${PTHREAD_LIBRARIES})
+  ${PTHREAD_LIBRARIES} PRIVATE)
 
 if(WIN32)
   list(APPEND LUNCHBOX_LINK_LIBRARIES ws2_32 mswsock imagehlp)
@@ -130,12 +124,6 @@ if(AVAHI-CLIENT_FOUND)
 endif()
 if(MPI_FOUND)
   list(APPEND LUNCHBOX_LINK_LIBRARIES ${MPI_LIBRARIES})
-endif()
-if(LEVELDB_FOUND)
-  list(APPEND LUNCHBOX_LINK_LIBRARIES ${LEVELDB_LIBRARIES})
-endif()
-if(libmemcached_FOUND)
-  list(APPEND LUNCHBOX_LINK_LIBRARIES ${libmemcached_LIBRARIES})
 endif()
 
 common_library(Lunchbox)

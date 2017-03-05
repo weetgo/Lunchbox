@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2013-2015, EPFL/Blue Brain Project
+/* Copyright (c) 2013-2017, EPFL/Blue Brain Project
  *                          Raphael Dumusc <raphael.dumusc@epfl.ch>
  *                          Stefan.Eilemann@epfl.ch
  *
@@ -22,101 +22,59 @@
 #ifndef LUNCHBOX_PLUGINREGISTERER_H
 #define LUNCHBOX_PLUGINREGISTERER_H
 
-#include <lunchbox/plugin.h> // used inline
+#include <lunchbox/plugin.h>        // used inline
 #include <lunchbox/pluginFactory.h> // used inline
 
-#include <boost/bind.hpp> // used inline
-#include <boost/version.hpp>
 #include <boost/functional/factory.hpp>
+#include <functional>
 
 namespace lunchbox
 {
 /**
- * Helper class to statically register derived plugin classes. If MyInitDataType
- * is not given, default value is servus::URI.
+ * Helper class to statically register derived plugin classes.
  *
  * The following code can be placed in a plugin's cpp file:
  * @code
  * namespace
  * {
- *     PluginRegisterer< MyPluginInterface > registerer;
+ *     PluginRegisterer< MyPlugin > registerer;
  * }
  * @endcode
  *
- * Also note that it needs the following type definition to be placed in the
- * plugin's interface (or in all its implementations that are to be registered):
+ * The plugin needs to conform to the following API:
  * @code
  * class MyPluginInterface
  * {
  * public:
- *     typedef MyPluginInterface PluginT;
+ *     typedef MyPluginInterface InterfaceT;
  *     typedef MyPluginInitData InitDataT;
- *              ( optional for InitDataT == servus::URI )
- * }
+ * };
+ *
+ * class MyPlugin : public MyPluginInterface
+ * {
+ * public:
+ *     MyPlugin( const InitDataT& data );
+ *     static bool handles( const InitDataT& data );
+ *     static std::string getDescription();
+ * };
  * @endcode
  *
  * @version 1.11.0
  */
-template< typename T > struct hasInitDataT
-{
-    // SFINAE class to check whether class T has a typedef InitDataT
-    // If class has the typedef, "value" is known in compile time as true,
-    // else value is false.
 
-    // SFINAE is used for specializing the PluginRegisterer class
-    // when no InitDataT is defined.
-    template<typename U> static char (&test(typename U::InitDataT const*))[1];
-    template<typename U> static char (&test(...))[2];
-    // cppcheck-suppress sizeofCalculation
-    static const bool value = (sizeof(test<T>(0)) == 1);
-};
-
-template< typename Impl, bool hasInitData = hasInitDataT< Impl >::value >
+template <typename T>
 class PluginRegisterer
 {
 public:
-    /** Construct a registerer and register the Impl class. @version 1.11.0 */
-    PluginRegisterer();
-};
-
-/**
- * Specialized PluginRegisterer for implementations which have the InitDataT
- * definition.
- */
-template< typename Impl > class PluginRegisterer< Impl, true >
-{
-public:
-    /** Construct a registerer and register the Impl class. @version 1.11.0 */
+    /** Construct and register the Plugin< T > class. @version 1.11.0 */
     PluginRegisterer()
     {
-        Plugin< typename Impl::PluginT, typename Impl::InitDataT > plugin(
-            boost::bind( boost::factory< Impl* >(), _1 ),
-            boost::bind( &Impl::handles, _1 ));
-        PluginFactory< typename Impl::PluginT,
-                       typename Impl::InitDataT >::getInstance().
-            register_( plugin );
+        PluginFactory<typename T::InterfaceT>::getInstance().register_(
+            {std::bind(boost::factory<T*>(), std::placeholders::_1),
+             std::bind(&T::handles, std::placeholders::_1),
+             std::bind(&T::getDescription)});
     }
 };
-
-/**
- * Specialized PluginRegisterer for plugin implementations which don't have
- * the InitDataT definition.
- */
-template< typename Impl > class PluginRegisterer< Impl, false >
-{
-public:
-    /** Construct a registerer and register the Impl class. @version 1.11.0 */
-    PluginRegisterer()
-    {
-        Plugin< typename Impl::PluginT > plugin(
-            boost::bind( boost::factory< Impl* >(), _1 ),
-            boost::bind( &Impl::handles, _1 ));
-
-        PluginFactory< typename Impl::PluginT >::getInstance().
-            register_( plugin );
-    }
-};
-
 }
 
 #endif

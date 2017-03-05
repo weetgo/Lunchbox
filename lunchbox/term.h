@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2006-2013, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2017, Stefan.Eilemann@epfl.ch
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -15,32 +15,22 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <lunchbox/test.h>
+#pragma once
 
-#include <lunchbox/clock.h>
-#include <lunchbox/timedLock.h>
+#include <lunchbox/api.h>
+#include <lunchbox/types.h>
 
-#include <iostream>
-
-int main( int, char** )
+namespace lunchbox
 {
-    lunchbox::TimedLock lock;
+namespace term
+{
+/** Terminal sizes in width, height. @version 1.16 */
+using size = std::pair<uint32_t, uint32_t>;
 
-    TEST( lock.set( ));
-
-    lunchbox::Clock clock;
-    TEST( !lock.set( 1000 ));
-    float time = clock.getTimef();
-
-    TESTINFO( time > 999.0f, "was: " << time );
-    TESTINFO( time < 1100.0f, "was: " << time );
-
-    clock.reset();
-    TEST( !lock.set( 100 ));
-    time = clock.getTimef();
-
-    TESTINFO( time > 99.0f, "was: " << time );
-    TESTINFO( time < 200.0f, "was: " << time );
-
-    return EXIT_SUCCESS;
+/**
+ * @return the width and height of the shell running the program.
+ * @version 1.16
+ */
+LUNCHBOX_API size getSize();
+}
 }

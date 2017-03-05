@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2013-2015, EPFL/Blue Brain Project
+/* Copyright (c) 2013-2016, EPFL/Blue Brain Project
  *                          Raphael Dumusc <raphael.dumusc@epfl.ch>
  *                          Stefan.Eilemann@epfl.ch
  *
@@ -22,70 +22,66 @@
 #ifndef LUNCHBOX_PLUGIN_H
 #define LUNCHBOX_PLUGIN_H
 
+#include <functional>
 #include <servus/uint128_t.h> // member
-#include <boost/function.hpp> // Plugin functions
-#include <boost/function_equal.hpp> // operator ==
 
 namespace lunchbox
 {
-/**
- * Manages a class deriving from a PluginT interface.
- *
- * Plugin classes deriving from PluginT must implement the following
- * prototype for their constructor:
- * @code
- * DerivedPluginClass( const InitDataT& initData );
- * @endcode
- *
- * PluginT must also implement the following method to be registered:
- * @code
- * static bool handles( const InitDataT& initData );
- * @endcode
- *
- * @version 1.11.0
- */
-template< class PluginT, class InitDataT = servus::URI > class Plugin
+/** @internal */
+template <class T>
+class Plugin
 {
 public:
-    /**
-     * The constructor method / concrete factory for Plugin objects.
-     * @version 1.11.0
-     */
-    typedef boost::function< PluginT* ( const InitDataT& ) > Constructor;
+    /** The constructor method for Plugin objects.  @version 1.11.0 */
+    using Constructor = std::function<T*(const typename T::InitDataT&)>;
 
     /**
      * The method to check if the plugin can handle a given initData.
      * @version 1.11.0
      */
-    typedef boost::function< bool ( const InitDataT& ) > HandlesFunc;
+    using HandlesFunc = std::function<bool(const typename T::InitDataT&)>;
+
+    /** The method to get the plugin's description. @version 1.16 */
+    using DescriptionFunc = std::function<std::string()>;
 
     /**
      * Construct a new Plugin.
-     * @param constructor_ The constructor method for Plugin objects.
+     * @param constructor The constructor method for Plugin objects.
      * @param handles_ The method to check if the plugin can handle the
      * initData.
+     * @param description method to get the the help for the plugin
      * @version 1.11.0
      */
-    Plugin( const Constructor& constructor_, const HandlesFunc& handles_ )
-        : constructor( constructor_ ), handles( handles_ )
-        , tag( servus::make_UUID( )) {}
+    Plugin(const Constructor& constructor, const HandlesFunc& handles_,
+           const DescriptionFunc& description)
+        : _constructor(constructor)
+        , _handles(handles_)
+        , _description(description)
+    {
+    }
 
-    /** @return true if the plugins wrap the same plugin. @version 1.11.0 */
-    bool operator == ( const Plugin& rhs ) const
-        { return tag == rhs.tag; }
+    /** Construct a new plugin instance. @version 1.14 */
+    T* construct(const typename T::InitDataT& data) const
+    {
+        return _constructor(data);
+    }
 
-    /** @return false if the plugins do wrap the same plugin. @version 1.11.0 */
-    bool operator != ( const Plugin& rhs ) const { return !(*this == rhs); }
+    /** @return true if this plugin handles the given request. @version 1.14 */
+    bool handles(const typename T::InitDataT& data) const
+    {
+        return _handles(data);
+    }
 
+    /** @return the plugin's description. @version 1.17 */
+    std::string getDescription() const { return _description(); }
 private:
-    friend class PluginFactory< PluginT, InitDataT >;
-    Constructor constructor;
-    HandlesFunc handles;
+    Constructor _constructor;
+    HandlesFunc _handles;
+    DescriptionFunc _description;
 
-    // Makes Plugin comparable. See http://stackoverflow.com/questions/18665515
-    servus::uint128_t tag;
+    bool operator==(const Plugin& rhs) const = delete;
+    bool operator!=(const Plugin& rhs) const = delete;
 };
-
 }
 
 #endif

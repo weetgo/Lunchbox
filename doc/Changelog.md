@@ -2,6 +2,33 @@
 
 # git master
 
+* [304](https://github.com/Eyescale/Lunchbox/pull/304):
+  Remove Condition, functionality is covered by std::condition_variable
+* [303](https://github.com/Eyescale/Lunchbox/pull/303):
+  Remove TimedLock, functionality is covered by std::timed_mutex
+* [302](https://github.com/Eyescale/Lunchbox/pull/302):
+  Remove Lock, functionality is covered by std::mutex
+* [301](https://github.com/Eyescale/Lunchbox/pull/301):
+  Rename Launcher to standalone fork() function
+* [300](https://github.com/Eyescale/Lunchbox/pull/300):
+  Remove stdExt.h, functionality is covered by std::unordered_map
+* [298](https://github.com/Eyescale/Lunchbox/pull/298):
+  Add MemoryMap::resize()
+* [294](https://github.com/Eyescale/Lunchbox/pull/294):
+  * Add description to plugins
+  * Add lunchbox::string::prepend()
+  * Add lunchbox::term::getSize()
+* [292](https://github.com/Eyescale/Lunchbox/pull/292):
+  Add MemoryMap element getter
+* [290](https://github.com/Eyescale/Lunchbox/pull/290):
+  A ThreadPool class
+
+# Release 1.15 (09-12-2016)
+
+* [283](https://github.com/Eyescale/Lunchbox/pull/283):
+  Break PersistentMap out into keyv::Map
+* [278](https://github.com/Eyescale/Lunchbox/pull/278):
+  Simplified Plugin API
 * [276](https://github.com/Eyescale/Lunchbox/pull/276):
   Renamed UnorderedIntervalSet to IntervalSet
 * [275](https://github.com/Eyescale/Lunchbox/pull/275):

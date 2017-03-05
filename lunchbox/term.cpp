@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2011-2012, Stefan Eilemann <eile@eyescale.ch>
+/* Copyright (c) 2017, Stefan.Eilemann@epfl.ch
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -15,22 +15,32 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "sleep.h"
-
+#include "term.h"
 #include "os.h"
-#include "time.h"
 
+#ifndef _MSC_VER
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#include <iostream>
 namespace lunchbox
 {
-void sleep(const uint32_t milliSeconds)
+namespace term
 {
-#ifdef _WIN32 //_MSC_VER
-    ::Sleep(milliSeconds);
+size getSize()
+{
+#ifdef _MSC_VER
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info))
+        return {info.dwSize.X, info.dwSize.Y};
 #else
-    timespec ts = convertToTimespec(milliSeconds);
-    while (::nanosleep(&ts, &ts) != 0) // -1 on signal (#4)
-        if (ts.tv_sec <= 0 && ts.tv_nsec <= 0)
-            return;
+    struct winsize w;
+    if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) >= 0)
+        return {w.ws_col, w.ws_row};
 #endif
+    return {120, 80};
+}
 }
 }

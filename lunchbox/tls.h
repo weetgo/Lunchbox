@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2013-2014, Stefan Eilemann <eile@equalizergraphics.com>
+/* Copyright (c) 2013-2016, Stefan Eilemann <eile@equalizergraphics.com>
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -19,14 +19,16 @@
 #define LUNCHBOX_TLS_H
 
 #include <lunchbox/api.h>
-#include <boost/noncopyable.hpp>
 
 namespace lunchbox
 {
-namespace detail { class TLS; }
+namespace detail
+{
+class TLS;
+}
 
 /** Provides thread-local storage API used by PerThread and PerThreadRef. */
-class TLS : public boost::noncopyable
+class TLS
 {
 public:
     typedef void (*ThreadDestructor_t)(void*);
@@ -38,13 +40,13 @@ public:
      *                 storage, not called if 0.
      * @version 1.7.2
      */
-    LUNCHBOX_API explicit TLS( ThreadDestructor_t dtorFunc );
+    LUNCHBOX_API explicit TLS(ThreadDestructor_t dtorFunc);
 
     /** Destruct the per-thread storage. @version 1.7.2 */
     LUNCHBOX_API ~TLS();
 
     /** Set the data for this thread-local storage. @version 1.7.2 */
-    LUNCHBOX_API void set( const void* data );
+    LUNCHBOX_API void set(const void* data);
 
     /** @return the data for this thread-local storage. @version 1.7.2 */
     LUNCHBOX_API void* get();
@@ -54,7 +56,12 @@ public:
 
 private:
     detail::TLS* const impl_;
+
+    TLS(const TLS&) = delete;
+    TLS(TLS&&) = delete;
+    TLS& operator=(const TLS&) = delete;
+    TLS& operator=(const TLS&&) = delete;
 };
 }
 
-#endif //LUNCHBOX_TLS_H
+#endif // LUNCHBOX_TLS_H

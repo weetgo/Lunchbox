@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2012, Stefan.Eilemann@epfl.ch
+/* Copyright (c) 2017, Stefan.Eilemann@epfl.ch
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 2.1 as published
@@ -15,35 +15,17 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <lunchbox/string.h>
 #include <lunchbox/test.h>
 
-#include <lunchbox/clock.h>
-#include <lunchbox/condition.h>
-#include <lunchbox/rng.h>
-
-#include <iostream>
-
-int main( int, char** )
+int main(int, char**)
 {
-    lunchbox::Condition condition;
-    lunchbox::Clock clock;
-    {
-        TEST( !condition.timedWait( 2345 ));
-        const float time = clock.getTimef();
-        TESTINFO( time > 2344.f, time );
-    }
-    lunchbox::RNG rng;
-    unsigned nTests = 30;
-    while( nTests-- )
-    {
-        const uint32_t timeout = rng.get<uint8_t>() + 2;
-
-        clock.reset();
-        TEST( !condition.timedWait( timeout ));
-        const float time = clock.getTimef();
-
-        TESTINFO( time > float( timeout - 1 ), time << " < " << timeout );
-    }
-
+    TEST(lunchbox::string::prepend("", "  ") == "  ");
+    TEST(lunchbox::string::prepend("foo", " ") == " foo");
+    TEST(lunchbox::string::prepend("foo\nbar", " ") == " foo\n bar");
+    TEST(lunchbox::string::prepend("\nfoo\nbar", " ") == " \n foo\n bar");
+    TEST(lunchbox::string::prepend("\nfoo\nbar", "") == "\nfoo\nbar");
+    TEST(lunchbox::string::prepend("\nfoo\nbar", "deine mutter ") ==
+         "deine mutter \ndeine mutter foo\ndeine mutter bar");
     return EXIT_SUCCESS;
 }
